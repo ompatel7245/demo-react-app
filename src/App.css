@@ -1,0 +1,105 @@
+:root {
+  --bg-color: #f8f9fa;
+  --text-main: #212529;
+  --accent-primary: #0d6efd;
+  /* Bootstrap Primary Blue */
+  --card-bg: #ffffff;
+  --border-color: #dee2e6;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar - adjusted for light theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Card Hover Effects */
+.character-card-hover {
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.character-card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  z-index: 10;
+}
+
+/* Modal Customization for Light Theme */
+.modal-content {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+  background-color: #000;
+}
+
+
+/* Loader Animation */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Character Overlay */
+.character-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.character-info {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.character-card-hover:hover .character-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 80%, transparent 100%);
+}
+
+.character-card-hover:hover .character-info {
+  max-height: 24px;
+  opacity: 1;
+  margin-top: 4px;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Mobile Tweaks: Always show overlay content on touch devices */
+@media (hover: none) {
+  .character-overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 80%, transparent 100%);
+  }
+
+  .character-info {
+    max-height: 24px;
+    opacity: 1;
+    margin-top: 4px;
+  }
+}
