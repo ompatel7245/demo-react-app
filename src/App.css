@@ -103,3 +103,31 @@ body {
     margin-top: 4px;
   }
 }
+
+/* Responsive Subtitle for Page Header */
+.responsive-subtitle {
+  font-size: 0.875rem; /* Mobile default */
+}
+
+@media (min-width: 768px) {
+  .responsive-subtitle {
+    font-size: 1.25rem; /* Tablet (fs-5) */
+  }
+}
+
+@media (min-width: 992px) {
+  .responsive-subtitle {
+    font-size: 1.5rem; /* Desktop (fs-4) */
+  }
+}
+
+/* Responsive Image Container Height */
+.character-img-container {
+  height: 300px; /* Mobile default */
+}
+
+@media (min-width: 768px) {
+  .character-img-container {
+    height: 250px; /* Web/Desktop view */
+  }
+}

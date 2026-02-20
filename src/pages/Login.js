@@ -10,8 +10,8 @@ const loginSchema = yup.object().shape({
 });
 
 const Login = () => {
-    const [email, setEmail] = useState('ompatel@gmail.com');
-    const [password, setPassword] = useState('Test@123');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [apiError, setApiError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
 
@@ -23,22 +23,20 @@ const Login = () => {
         e.preventDefault();
         setApiError('');
         setFieldErrors({});
-
         try {
-            // Validate inputs with abortEarly: false to get all errors
             await loginSchema.validate({ email, password }, { abortEarly: false });
-
             // Attempt login
             if (login(email, password)) {
-                // Redirect to origin or home
                 const from = location.state?.from?.pathname || '/';
+                // Navigate to origin or home
                 navigate(from, { replace: true });
             } else {
+                // Set API error
                 setApiError('Invalid credentials. Please check your email and password.');
             }
         } catch (err) {
+            // Handle Yup validation errors
             if (err instanceof yup.ValidationError) {
-                // Process Yup validation errors into a field-mapped object
                 const errors = {};
                 err.inner.forEach(error => {
                     errors[error.path] = error.message;
@@ -54,10 +52,8 @@ const Login = () => {
         <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
             <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
                 <h2 className="text-center mb-4">Login</h2>
-
-                {/* API Error Alert (Top) */}
+                {/* API Error Alert */}
                 {apiError && <div className="alert alert-danger" role="alert">{apiError}</div>}
-
                 <form onSubmit={handleLogin} noValidate>
                     <div className="mb-3">
                         <label className="form-label">Email address</label>
@@ -70,7 +66,7 @@ const Login = () => {
                                 if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
                             }}
                         />
-                        {/* Field-level Error */}
+                        {/* Email Error */}
                         {fieldErrors.email && <div className="invalid-feedback">{fieldErrors.email}</div>}
                     </div>
 
@@ -85,15 +81,14 @@ const Login = () => {
                                 if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' });
                             }}
                         />
-                        {/* Field-level Error */}
+                        {/* Password Error */}
                         {fieldErrors.password && <div className="invalid-feedback">{fieldErrors.password}</div>}
                     </div>
-
+                    {/* Submit Button */}
                     <button type="submit" className="btn btn-primary w-100">Login</button>
                 </form>
-
                 <div className="mt-3 text-muted small">
-                    <p className="mb-1"><strong>Test Credentials:</strong></p>
+                    <p className="mb-1 fw-bold">Test Credentials:</p>
                     <div>User: ompatel@gmail.com</div>
                     <div>Pass: Test@123</div>
                 </div>

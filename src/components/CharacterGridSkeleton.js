@@ -9,7 +9,7 @@ const CharacterGridSkeleton = () => {
                 <div key={i} className="col">
                     <div className="card h-100 border-0 shadow-sm bg-white overflow-hidden" aria-hidden="true">
                         <div className="placeholder-glow w-100 h-100">
-                            <div className="placeholder w-100 bg-secondary" style={{ height: '250px', objectFit: 'cover' }}></div>
+                            <div className="placeholder w-100 bg-secondary character-img-container"></div>
                         </div>
                     </div>
                 </div>

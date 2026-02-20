@@ -1,13 +1,13 @@
 
-// --- Shared Cache & Constants ---
+// --- API Cache ---
 export const apiCache = {
-    planets: {}, // url -> { name, residents: [] }
-    species: {}, // url -> { name, people: [] }
-    films: {},   // url -> { title, characters: [] }
-    people: {}   // url -> personObject (details)
+    planets: {},
+    species: {},
+    films: {},
+    people: {}
 };
 
-// --- Helper Functions ---
+// --- API Helper Functions ---
 export const fetchAllPages = async (baseUrl) => {
     let results = [];
     let nextUrl = baseUrl;

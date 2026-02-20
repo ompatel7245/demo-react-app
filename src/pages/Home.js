@@ -5,7 +5,6 @@ import CharacterModal from '../components/CharacterModal';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ControlsSkeleton from '../components/ControlsSkeleton';
 import CharacterGridSkeleton from '../components/CharacterGridSkeleton';
-
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +13,7 @@ const Home = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Handle Logout
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -23,14 +23,14 @@ const Home = () => {
   const [people, setPeople] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const [error, setError] = useState(null);
   const [planetOptions, setPlanetOptions] = useState([]);
   const [speciesOptions, setSpeciesOptions] = useState([]);
   const [filmOptions, setFilmOptions] = useState([]);
   const [resolvedPlanets, setResolvedPlanets] = useState({});
   const [selectedPerson, setSelectedPerson] = useState(null);
-  console.log("selectedPerson", selectedPerson);
+  const [selectedPersonImgUrl, setSelectedPersonImgUrl] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterHomeworld, setFilterHomeworld] = useState('');
@@ -39,8 +39,12 @@ const Home = () => {
   const [page, setPage] = useState(1);
 
   const debounceTimer = useRef(null);
+  const hasFetchedOptions = useRef(false);
 
   useEffect(() => {
+    if (hasFetchedOptions.current) return;
+    hasFetchedOptions.current = true;
+
     const filterOptionsData = async () => {
       try {
         const [planets, species, films] = await Promise.all([
@@ -63,17 +67,19 @@ const Home = () => {
         species.forEach(species => apiCache.species[species.url] = species);
         films.forEach(film => apiCache.films[film.url] = film);
 
-        setInitializing(false);
-      } catch (e) {
-        console.error("Init Error", e);
+        setLoadingOptions(false);
+      } catch (error) {
+        console.error("Init Error", error);
         setError("Failed to initialize galactic charts.");
-        setInitializing(false);
+        setLoadingOptions(false);
       }
     };
     filterOptionsData();
   }, []);
 
   useEffect(() => {
+    if (!searchTerm && !debouncedSearch) return; // Skip initial empty run
+
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -83,13 +89,8 @@ const Home = () => {
   }, [searchTerm]);
 
 
-  // Reset page on filter change
   useEffect(() => {
-    setPage(1);
-  }, [filterHomeworld, filterSpecies, filterFilm]);
-
-  useEffect(() => {
-    if (initializing) return;
+    if (loadingOptions) return;
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -101,15 +102,15 @@ const Home = () => {
         } else {
           await fetchFilterData(page, debouncedSearch, filterHomeworld, filterSpecies, filterFilm);
         }
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error("Error:", error);
         setError("Failed to fetch data.");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [page, debouncedSearch, filterHomeworld, filterSpecies, filterFilm, initializing]);
+  }, [page, debouncedSearch, filterHomeworld, filterSpecies, filterFilm, loadingOptions]);
 
   //API Call
   const fetchPeopleData = async (p, search) => {
@@ -126,30 +127,30 @@ const Home = () => {
   };
 
   // Filter API Call
-  const fetchFilterData = async (page, search, hwUrl, spUrl, filmUrl) => {
-    let candidates = null;
+  const fetchFilterData = async (page, search, homeworldUrl, speciesUrl, filmUrl) => {
+    let matches = null;
 
-    const addToCandidates = (list) => {
-      const cleanList = new Set(list); // Ensure uniqueness
-      if (candidates === null) candidates = cleanList;
+    const findCommonMatches = (list) => {
+      const uniqueList = new Set(list); // Ensure uniqueness
+      if (matches === null) matches = uniqueList;
       else {
         // Intersect
-        candidates = new Set([...candidates].filter(x => cleanList.has(x)));
+        matches = new Set([...matches].filter(x => uniqueList.has(x)));
       }
     };
 
-    if (hwUrl && apiCache.planets[hwUrl]) {
-      addToCandidates(apiCache.planets[hwUrl].residents);
+    if (homeworldUrl && apiCache.planets[homeworldUrl]) {
+      findCommonMatches(apiCache.planets[homeworldUrl].residents);
     }
-    if (spUrl && apiCache.species[spUrl]) {
-      addToCandidates(apiCache.species[spUrl].people);
+    if (speciesUrl && apiCache.species[speciesUrl]) {
+      findCommonMatches(apiCache.species[speciesUrl].people);
     }
     if (filmUrl && apiCache.films[filmUrl]) {
-      addToCandidates(apiCache.films[filmUrl].characters);
+      findCommonMatches(apiCache.films[filmUrl].characters);
     }
 
-    if (candidates === null) candidates = new Set();
-    let resultUrls = [...candidates];
+    if (matches === null) matches = new Set();
+    let resultUrls = [...matches];
 
     if (resultUrls.length === 0) {
       setPeople([]);
@@ -238,13 +239,13 @@ const Home = () => {
       </header>
 
       {/* Page Title */}
-      <div className="mb-5 text-center">
+      <div className="mb-3 mb-lg-5 text-center">
         <h2 className="display-5 fw-bold text-dark mb-2">Star Wars Characters</h2>
-        <p className="text-muted lead">Explore the galaxy's most iconic inhabitants</p>
+        <p className="text-muted responsive-subtitle mb-0">The ultimate directory for Star Wars enthusiasts</p>
       </div>
       {/* Controls Container */}
       <div className="card shadow-sm border-0 mb-4 p-4 bg-white rounded-3">
-        {initializing ? (
+        {loadingOptions ? (
           <ControlsSkeleton />
         ) : (
           <div className="row g-3">
@@ -263,7 +264,10 @@ const Home = () => {
               <SearchableDropdown
                 options={planetOptions}
                 value={filterHomeworld}
-                onChange={setFilterHomeworld}
+                onChange={(val) => {
+                  setFilterHomeworld(val);
+                  setPage(1);
+                }}
                 placeholder="All Homeworld"
               />
             </div>
@@ -272,7 +276,10 @@ const Home = () => {
               <SearchableDropdown
                 options={filmOptions}
                 value={filterFilm}
-                onChange={setFilterFilm}
+                onChange={(val) => {
+                  setFilterFilm(val);
+                  setPage(1);
+                }}
                 placeholder="All Films"
               />
             </div>
@@ -281,7 +288,10 @@ const Home = () => {
               <SearchableDropdown
                 options={speciesOptions}
                 value={filterSpecies}
-                onChange={setFilterSpecies}
+                onChange={(val) => {
+                  setFilterSpecies(val);
+                  setPage(1);
+                }}
                 placeholder="All Species"
               />
             </div>
@@ -290,7 +300,7 @@ const Home = () => {
               <button
                 className="btn btn-danger w-100 fw-bold"
                 onClick={handleResetFilters}
-                disabled={!searchTerm && !filterHomeworld && !filterSpecies && !filterFilm}
+                disabled={!searchTerm && !filterHomeworld && !filterSpecies && !filterFilm && page === 1}
                 style={{ transition: 'all 0.3s' }}
               >
                 Reset Filters
@@ -307,22 +317,31 @@ const Home = () => {
       ) : (
         <>
           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-            {people.map((person) => {
+            {people && people?.length > 0 && people?.map((person, index) => {
               const imgUrl = `https://picsum.photos/seed/${person.name.replace(/\s/g, '')}/400/300`;
               return (
-                <div key={person.url || person.name} className="col">
+                <div key={index} className="col">
                   <div
                     className="card h-100 border-0 shadow-sm character-card-hover bg-white overflow-hidden"
                     style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
-                    onClick={() => setSelectedPerson(person)}
+                    onClick={() => {
+                      setSelectedPerson(person);
+                      setSelectedPersonImgUrl(imgUrl);
+                    }}
                   >
-                    <div className="position-relative w-100 h-100">
+                    <div className="position-relative w-100 character-img-container" style={{ backgroundColor: '#f0f0f0', overflow: 'hidden' }}>
                       <img
-                        src={imgUrl} className="card-img-top w-100 h-100 object-fit-cover"
-                        alt={person.name} loading="lazy"
-                        style={{ height: '300px', transition: 'transform 0.5s' }}
+                        src={imgUrl}
+                        className="card-img-top w-100 h-100 object-fit-cover"
+                        alt={person.name || "image"}
+                        loading="lazy"
+                        style={{ height: '100%', transition: 'transform 0.5s' }}
                         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
                         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://placehold.co/400x300/212529/ffffff?text=No+Image';
+                        }}
                       />
                       <div className="character-overlay position-absolute bottom-0 start-0 w-100 h-50 d-flex flex-column justify-content-end p-3 text-white">
                         <h5 className="fw-bold mb-1 text-shadow">{person.name}</h5>
@@ -365,11 +384,15 @@ const Home = () => {
           )}
         </>
       )}
-
+      {/* Modal */}
       {selectedPerson && (
         <CharacterModal
           character={selectedPerson}
-          onClose={() => setSelectedPerson(null)}
+          imgUrl={selectedPersonImgUrl}
+          onClose={() => {
+            setSelectedPerson(null)
+            setSelectedPersonImgUrl(null)
+          }}
         />
       )}
     </div>

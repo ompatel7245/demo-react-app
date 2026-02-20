@@ -2,13 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { apiCache } from "../utils/api";
 
-const CharacterModal = ({ character, onClose }) => {
+const CharacterModal = ({ character, onClose, imgUrl }) => {
     const [homeworldData, setHomeworldData] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Derive Image URL
-    const imgUrl = `https://picsum.photos/seed/${character.name.replace(/\s/g, "")}/800/400`;
-
     // Formatted Date
     const formatDate = (isoString) => {
         if (!isoString) return "Unknown";
@@ -23,7 +19,7 @@ const CharacterModal = ({ character, onClose }) => {
                 return;
             }
 
-            const hwUrl = character.homeworld.replace('http:', 'https:');
+            const homeworldUrl = character.homeworld.replace('http:', 'https:');
 
             // Check cache first
             if (apiCache.planets[character.homeworld] && typeof apiCache.planets[character.homeworld] === 'object') {
@@ -33,13 +29,13 @@ const CharacterModal = ({ character, onClose }) => {
             }
 
             try {
-                const res = await fetch(hwUrl);
+                const res = await fetch(homeworldUrl);
                 const data = await res.json();
                 // Update cache
                 apiCache.planets[character.homeworld] = data;
                 setHomeworldData(data);
-            } catch (err) {
-                console.error("Failed to fetch homeworld", err);
+            } catch (error) {
+                console.error("Failed to fetch homeworld", error);
             } finally {
                 setLoading(false);
             }
@@ -58,7 +54,7 @@ const CharacterModal = ({ character, onClose }) => {
             className="modal show d-block"
             style={{
                 backgroundColor: "rgba(0,0,0,0.8)",
-                backdropFilter: "blur(5px)", // Enhance aesthetic
+                backdropFilter: "blur(5px)",
                 zIndex: 1055,
             }}
             onClick={onClose}
@@ -68,26 +64,28 @@ const CharacterModal = ({ character, onClose }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="modal-content overflow-hidden border-0 shadow-lg" style={{ borderRadius: '1rem' }}>
-
                     {/* Header Image Section */}
                     <div className="position-relative" style={{ height: '250px' }}>
                         <img
                             src={imgUrl}
-                            alt={character.name}
+                            alt={character.name || "image"}
                             className="w-100 h-100 object-fit-cover"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://placehold.co/800x400/212529/ffffff?text=Image+Not+Found';
+                            }}
                         />
-                        {/* Dark Gradient Overlay */}
+                        {/* Gradient Style */}
                         <div className="position-absolute top-0 start-0 w-100 h-100"
                             style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)' }}>
                         </div>
-
-                        {/* Character Name & Close Button */}
+                        {/* Close Button */}
                         <button
                             type="button"
                             className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
                             onClick={onClose}
                         />
-
+                        {/* Character Name & Date Added */}
                         <div className="position-absolute bottom-0 start-0 p-4 text-white">
                             <h1 className="fw-bold mb-0 text-shadow display-5">{character.name}</h1>
                             <span className="badge bg-light text-dark opacity-75 mt-2">
@@ -95,10 +93,8 @@ const CharacterModal = ({ character, onClose }) => {
                             </span>
                         </div>
                     </div>
-
                     <div className="modal-body p-4 bg-white">
                         <div className="row g-5">
-
                             {/* Character Stats */}
                             <div className="col-md-6 border-end-md">
                                 <h5 className="text-uppercase text-muted fw-bold mb-4 small">Character Stats</h5>

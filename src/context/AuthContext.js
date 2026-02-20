@@ -5,7 +5,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 const AuthContext = createContext();
 
 // Mock JWT
-const MOCK_TOKEN_SECRET = 'secret_key';
+const SECRET_KEY = 'secret_key'; // Mock secret key
 const TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 mins for demo
 
 export const AuthProvider = ({ children }) => {
@@ -19,17 +19,16 @@ export const AuthProvider = ({ children }) => {
             email,
             exp: Date.now() + TOKEN_EXPIRY_MS
         }));
-        return `${header}.${payload}.${MOCK_TOKEN_SECRET}`;
+        return `${header}.${payload}.${SECRET_KEY}`;
     };
 
     // Schedule Refresh
     const scheduleRefresh = (delay) => {
         setTimeout(() => {
             if (sessionStorage.getItem('authToken')) {
-                // Check if still logged in
+                // Check again
                 const newToken = generateToken('ompatel@gmail.com');
                 sessionStorage.setItem('authToken', newToken);
-                console.log("Silent Token Refresh...");
                 scheduleRefresh(TOKEN_EXPIRY_MS - 60 * 1000);
             }
         }, Math.max(0, delay));
@@ -39,7 +38,6 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = sessionStorage.getItem('authToken');
         if (token) {
-            // Simple mock validation
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 if (payload.exp > Date.now()) {
@@ -56,7 +54,6 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (email, password) => {
-        // Mock API call
         if (email === 'ompatel@gmail.com' && password === 'Test@123') {
             const token = generateToken(email);
             sessionStorage.setItem('authToken', token);
@@ -72,8 +69,6 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-
-
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
             {!loading && children}
@@ -88,8 +83,6 @@ export const withAuth = (WrappedComponent) => {
     return (props) => {
         const { user } = useAuth();
         if (!user) {
-            // Redirect logic handled by router usually, but here we can return null or Login
-            // Ideally, HOC works with routing.
             return null;
         }
         return <WrappedComponent {...props} />;
